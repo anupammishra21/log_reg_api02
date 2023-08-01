@@ -193,7 +193,7 @@ class loginRegisterController{
         try{
             res.clearCookie('user_token')
             res.status(200).json({
-                message:"logged out",
+                message:"your account has been loggedOut",
                 data:[]
             })
 
