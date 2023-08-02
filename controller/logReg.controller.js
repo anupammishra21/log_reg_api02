@@ -1,6 +1,8 @@
 const userModel = require('../model/logreg.model')
-const bcrypt = require('bcryptjs')
+const bcrypt = require('bcryptjs');
+const dayjs = require('dayjs');
 const jwt = require('jsonwebtoken');
+const mailer = require('../helper/mailer')
 
 
 class loginRegisterController{
@@ -13,7 +15,7 @@ class loginRegisterController{
                 next();
             } else {
                 res.status(200).json({
-                    message: "UnAuthorized UseR .. Please Login",
+                    message: "UnAuthorized User  Please Login",
                     data:[]
                 });                                          
             }
@@ -41,12 +43,21 @@ class loginRegisterController{
 
     async register(req,res){
         try{
-            if (_.isEmpty(req.body.name)) {
+            if (_.isEmpty(req.body.firstname)) {
                 return res.status(400).json({
-                    message:"name is required",
+                    message:"firstname is required",
                     data:[]
                 })
             }
+
+            if (_.isEmpty(req.body.lastname)) {
+                return res.status(400).json({
+                    message:"lastname is required",
+                    data:[]
+                })
+            }
+
+
 
             if (_.isEmpty(req.body.email)) {
                 return res.status(400).json({
@@ -56,12 +67,7 @@ class loginRegisterController{
             }
 
             
-            if (_.isEmpty(req.body.age)) {
-                return res.status(400).json({
-                    message:"age is Required",
-                    data:[]
-                })
-            }
+          
 
             if (_.isEmpty(req.body.password)) {
                 return res.status(400).json({
@@ -92,8 +98,18 @@ class loginRegisterController{
                 data:[]
             }) 
         }
+        req.body.fullname= req.body.firstname + " " + req.body.lastname
 
         req.body.password = bcrypt.hashSync(req.body.password,bcrypt.genSaltSync(10))
+
+        const otpGenerated = `OTP-${Math.round(Math.random() * 10000)}`
+        req.body.otp = otpGenerated
+        const currentTime = dayjs().unix()
+        // console.log(currentTime);
+
+        req.body.otpExpirtTime = currentTime
+        const dateTimeObject = new Date()
+        await mailer.sendMail(process.env.EMAIL,req.body.email,'Succesfully Registered', `hiw ${req.body.fullname} your account has been registered, <br> Date :${dateTimeObject.toDateString()} <br> Time : ${dateTimeObject.toTimeString()}<br> use this otp to varify your gmail ${otpGenerated} <br> this otp is valid for 1 minute `)
 
         let saveData = await userModel.create(req.body)
         if (!_.isEmpty(saveData)&& saveData._id ) {

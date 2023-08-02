@@ -3,11 +3,16 @@ const mongoose = require('mongoose')
 const schemae = mongoose.Schema
 
 const userSchema = schemae({
-    name : { type: String , require:true },  
+    firstname : { type: String , require:true },  
+    lastname : { type: String , require:true },  
+    fullname : { type: String , require:true },  
     email : { type: String , require:true },
-    age : { type: Number , require:true },
-    password : { type: String , require:true },
-    isDeleted: { type: Boolean , enum: [true, false], default: false }
+    isEmailVerified:{type:Boolean,enum:[true,false],default:false},
+    otp:{type:String,require:true},
+    otpExpiryTime:{type:String,require:true},
+    password:{type:String,require:true},  
+    isDeleted: { type: Boolean , enum: [true, false], default: false },
+    isStatus:{type:String,enum:["Active","Inactive"],default:"Active"}
 
 },{
     timestamps:true,
