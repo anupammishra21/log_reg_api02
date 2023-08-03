@@ -107,7 +107,7 @@ class loginRegisterController{
         const currentTime = dayjs().unix()
         // console.log(currentTime);
 
-        req.body.otpExpirtTime = currentTime
+        req.body.otpExpiryTime = currentTime
         const dateTimeObject = new Date()
         await mailer.sendMail(process.env.EMAIL,req.body.email,'Succesfully Registered', `hiw ${req.body.fullname} your account has been registered, <br> Date :${dateTimeObject.toDateString()} <br> Time : ${dateTimeObject.toTimeString()}<br> use this otp to varify your gmail ${otpGenerated} <br> this otp is valid for 1 minute `)
 
@@ -154,7 +154,15 @@ class loginRegisterController{
                     data:[]
                 })
                 
-             } else{
+             }else if(email_exist.isEmailVerified !==true){
+                res.status(400).json({
+                    message:"Email is not verified ",
+                    data:[]
+                })
+
+             }
+             
+             else{
                 const hash_password = email_exist.password
                 if (bcrypt.compareSync(req.body.password,hash_password)) {
                     let token = jwt.sign({
@@ -181,6 +189,72 @@ class loginRegisterController{
 
         }
 
+
+    }
+
+
+    //  <<<<<<<<<<<<<<< async varify otp >>>>>>>>>>>>>>
+    async varifyOtp(req,res){
+        try{
+            if (_.isEmpty(req.body.email)) {
+                return res.status(400).json({
+                    message:"Email is required",
+                    data:[]
+                })
+                
+            }
+
+            let email_exist = await userModel.findOne({email:req.body.email})
+
+            if (_.isEmpty(email_exist)) {
+                res.status(400).json({
+                    message:"this email does not exist with this email",
+                    data:[]
+                })
+            }
+
+            if (_.isEmpty(req.body.otp)) {
+                res.status(400).json({
+                    message:" OTP is required ",
+                    data:[]
+                })
+            }
+
+            let otp_exist = await userModel.findOne({otp:req.body.otp})
+
+            if (_.isEmpty(otp_exist)) {
+                res.status(400).json({
+                    message:"entered otp is invalid",
+                    data:[]
+                })
+                
+            }
+
+            const dbTime = dayjs.unix(email_exist.otpExpiryTime)
+            const otpExpiredTime = dbTime.add(1,'minute').unix()
+            console.log(otpExpiredTime,' 1 minutes after');
+            const nowTime = dayjs().unix(email_exist.otpExpiryTime)
+            console.log(nowTime); 
+
+            const validityVerify = dayjs.unix(otpExpiredTime).isAfter(dayjs.unix(nowTime))
+            // console.log(validityVerify);
+
+            if (validityVerify === true) {
+                await userModel.findByIdAndUpdate(email_exist._id,{isEmailVerified:true})
+                res.status(200).json({
+                    message:"Email is verified, you can proceed to login ",
+                    data:[]
+                })
+            }else{
+                res.status(401).json({
+                    message:"Expired otp",
+                    data:[]
+                })
+            }
+        }catch(err){
+            throw err
+
+        }
 
     }
 //   <<<<<<<<<<<< user dashboard >>>>>>>>>>>>>>>>>>
@@ -221,6 +295,8 @@ class loginRegisterController{
 
         }
     }
+
+
 
 
 
