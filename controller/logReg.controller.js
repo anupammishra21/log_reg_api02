@@ -146,6 +146,7 @@ class loginRegisterController{
              }
 
              let email_exist = await userModel.findOne({email: req.body.email})
+            
 
              if (_.isEmpty(email_exist)) {
                 res.status(400).json({
@@ -161,12 +162,14 @@ class loginRegisterController{
                     },'abcdefg',{expiresIn:"2d"})
                     res.cookie('user_token',token)
                     res.status(200).json({
-                        message:"Login sucessfull"
+                        message:"Login sucessfull",
+                      
+                        
                     })
                 }else{
                     res.status(401).json({
                         message: "Bad credentials",
-                        data:email_exist
+                        data:[]
                     });   
                 }
              }
